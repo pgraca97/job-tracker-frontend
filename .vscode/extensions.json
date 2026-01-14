@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "eamodio.gitlens",
+    "usernamehw.errorlens",
+    "dsznajder.es7-react-js-snippets",
+    "steoates.autoimport",
+    "streetsidesoftware.code-spell-checker",
+    "christian-kohler.path-intellisense",
+    "aaron-bond.better-comments"
+  ]
+}
