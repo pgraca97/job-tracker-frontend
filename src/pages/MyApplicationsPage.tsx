@@ -8,6 +8,11 @@ import type { Application } from "../types"
 const columnHelper = createColumnHelper<Application>()
 
 const columns = [
+  columnHelper.display({
+    id: "index",
+    header: "",
+    cell: (info) => info.row.index + 1,
+  }),
   columnHelper.accessor("company", {
     header: "Company",
     cell: (info) => info.getValue(),
