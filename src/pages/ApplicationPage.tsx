@@ -1,13 +1,13 @@
-import { useQuery, } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router";
-import { apiClient } from "../api/client";
-import { useDeleteApplication } from "../hooks/useDelApplication";
-import type { Application } from "../types";
+import { useQuery } from "@tanstack/react-query"
+import { useNavigate, useParams } from "react-router"
+import { apiClient } from "../api/client"
+import { useDeleteApplication } from "../hooks/useDelApplication"
+import type { Application } from "../types"
 
 export default function ApplicationPage() {
-  const { id } = useParams<{ id: string }>();
-  const { deleteWithConfirmation, isPending } = useDeleteApplication();
-  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>()
+  const { deleteWithConfirmation, isPending } = useDeleteApplication()
+  const navigate = useNavigate()
 
   const getApplication = async (): Promise<Application> => {
     const res = await apiClient.get(`/applications/${id}`)

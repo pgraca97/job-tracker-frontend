@@ -1,4 +1,10 @@
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
+import {
+  type ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  type RowData,
+  useReactTable,
+} from "@tanstack/react-table"
 import { useState } from "react"
 import { useNavigate } from "react-router"
 import { useDeleteApplication } from "../hooks/useDelApplication"
@@ -11,11 +17,19 @@ interface TableProps<TData> {
   }[keyof TData][]
 }
 
+declare module "@tanstack/react-table" {
+  // Aqui defino o que eu quero que exista dentro de 'meta'
+  interface ColumnMeta<TData extends RowData, TValue> {
+    className?: string;
+    isEditable?: boolean;
+    
+  }
+}
+
 export default function Table({ data, columns }: TableProps<Application>) {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null)
-
   const navigate = useNavigate()
-  const { deleteWithConfirmation } = useDeleteApplication();
+  const { deleteWithConfirmation } = useDeleteApplication()
 
   const table = useReactTable({
     data: data || [],
@@ -23,27 +37,37 @@ export default function Table({ data, columns }: TableProps<Application>) {
     getCoreRowModel: getCoreRowModel(),
   })
 
-  const _handleMouseEnter = (row: any) => {
-    console.log("Hovered cell:", row.index)
-    console.log(`Mouse entered cell with id: ${row.id}`)
-    if (row.id.includes("company")) {
-      console.log("You hovered over a Company cell!")
-    }
+  const getCellClasses = <TValue,>(columnDef: ColumnDef<Application, TValue>) => {
+    const baseClasses = "border group relative"
+    const metaClasses = columnDef.meta?.className || ""
+
+    // Se for editável, não adiciona padding (o input vai ter)
+    const paddingClasses = columnDef.meta?.isEditable ? "" : "p-1"
+
+    return `${baseClasses} ${paddingClasses} ${metaClasses}`.trim()
   }
 
-  const _handleCompanyClick = (application: Application) => {
+  // const _handleMouseEnter = (row: any) => {
+  //   console.log("Hovered cell:", row.index)
+  //   console.log(`Mouse entered cell with id: ${row.id}`)
+  //   if (row.id.includes("company")) {
+  //     console.log("You hovered over a Company cell!")
+  //   }
+  // }
+
+  const handleCompanyClick = (application: Application) => {
     console.log("Company cell clicked:", application.id)
     navigate(`/application/${application.id}`)
   }
 
   return (
     <div>
-      <table>
+      <table className="text-left border-collapse">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <th key={header.id} colSpan={header.colSpan}>
+                <th key={header.id} colSpan={header.colSpan} className="border px-4 py-2">
                   {flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               ))}
@@ -56,30 +80,102 @@ export default function Table({ data, columns }: TableProps<Application>) {
               {row.getVisibleCells().map((cell) => (
                 <td
                   key={cell.id}
-                  className={
-                    cell.column.id === "company"
-                      ? "hover:bg-blue-50 relative"
-                      : cell.column.id === "index"
-                        ? "relative"
-                        : ""
-                  }
-                  onMouseEnter={() => { setHoveredCell(cell.id); _handleMouseEnter(row); }}
+                  className={getCellClasses(cell.column.columnDef)}
+                  onMouseEnter={() => setHoveredCell(cell.id)}
                   onMouseLeave={() => setHoveredCell(null)}
+                  onClick={(e) => {
+                    setHoveredCell(null);
+                    if (cell.column.columnDef.meta?.isEditable) {
+                      const target = e.currentTarget;
+                      target.classList.add('border-b-red-500');
+
+                      // Adicionar borda ao td acima (mesma coluna, linha anterior)
+                      const currentRow = target.parentElement as HTMLTableRowElement;
+                      const previousRow = currentRow.previousElementSibling as HTMLTableRowElement;
+
+                      if (previousRow) {
+                        const cellIndex = Array.from(currentRow.children).indexOf(target);
+                        const cellAbove = previousRow.children[cellIndex] as HTMLTableCellElement;
+
+                        if (cellAbove) {
+                          cellAbove.classList.add('border-b-red-500');
+                        }
+                      } else {
+                        // É a primeira linha, adiciona borda ao th correspondente
+                        const table = currentRow.closest('table');
+                        const thead = table?.querySelector('thead');
+                        const headerRow = thead?.querySelector('tr');
+
+                        if (headerRow) {
+                          const cellIndex = Array.from(currentRow.children).indexOf(target);
+                          const th = headerRow.children[cellIndex] as HTMLTableCellElement;
+
+                          if (th) {
+                            th.classList.add('border-b-red-500');
+                          }
+                        }
+                      }
+                    };
+                  }}
+                  onBlur={(e) => {
+                    const target = e.currentTarget;
+                    target.classList.remove('border-b-red-500');
+
+                    // Remover borda do elemento acima também
+                    const currentRow = target.parentElement as HTMLTableRowElement;
+                    const previousRow = currentRow.previousElementSibling as HTMLTableRowElement;
+
+                    if (previousRow) {
+                      const cellIndex = Array.from(currentRow.children).indexOf(target);
+                      const cellAbove = previousRow.children[cellIndex] as HTMLTableCellElement;
+
+                      if (cellAbove) {
+                        cellAbove.classList.remove('border-b-red-500');
+                      }
+                    } else {
+                      // É a primeira linha, remove borda do th correspondente
+                      const table = currentRow.closest('table');
+                      const thead = table?.querySelector('thead');
+                      const headerRow = thead?.querySelector('tr');
+
+                      if (headerRow) {
+                        const cellIndex = Array.from(currentRow.children).indexOf(target);
+                        const th = headerRow.children[cellIndex] as HTMLTableCellElement;
+
+                        if (th) {
+                          th.classList.remove('border-b-red-500');
+                        }
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      setHoveredCell(null)
+                    }
+                  }}
                 >
                   {cell.column.id === "company" && hoveredCell === cell.id && (
                     <button
-                      onClick={() => _handleCompanyClick(row.original)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCompanyClick(row.original)
+                        setHoveredCell(null)
+                      }}
                       type="button"
-                      className="absolute right-0 cursor-pointer"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white border px-2 py-1 rounded shadow-sm cursor-pointer select-none"
                     >
                       Open
                     </button>
                   )}
                   {cell.column.id === "index" && hoveredCell === cell.id && (
                     <button
-                      onClick={() => deleteWithConfirmation(row.original.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteWithConfirmation(row.original.id)
+                        setHoveredCell(null)
+                      }}
                       type="button"
-                      className="absolute right-0"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500"
                     >
                       Delete
                     </button>
