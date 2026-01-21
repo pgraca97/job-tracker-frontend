@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import { useUpdateApplication } from "../hooks/useUpdateApplication"
 import type { Application } from "../types"
 
@@ -10,51 +10,40 @@ interface EditableCellProps {
 
 export function EditableCell({ initialValue, applicationId, field }: EditableCellProps) {
   const [value, setValue] = useState(initialValue)
-  const lastKeyPressedRef = useRef<string | null>(null)
+  const skipSaveRef = useRef(false)
   const { mutate, isPending } = useUpdateApplication()
 
-  useEffect(() => {
-    setValue(initialValue)
-  }, [initialValue])
-
-  const handleBlur = () => {
-    if (lastKeyPressedRef.current === "Escape") {
-      lastKeyPressedRef.current = null
+  const handleSave = () => {
+    if (skipSaveRef.current) {
+      skipSaveRef.current = false
       return
     }
-    mutate({
-      id: applicationId,
-      data: { [field]: value },
-    })
+    if (value !== initialValue) {
+      mutate({ id: applicationId, data: { [field]: value } })
+    }
+  }
+
+  const handleCancel = () => {
+    setValue(initialValue)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-
-    if (e.key === "Enter") {
-      e.currentTarget.blur()
-    }
+    if (e.key === "Enter") handleSave()
     if (e.key === "Escape") {
-      console.log("Reverting to initial value")
-      lastKeyPressedRef.current = e.key
-      setValue(initialValue)
+      skipSaveRef.current = true
+      handleCancel()
+      e.currentTarget.blur()
     }
   }
 
   return (
     <input
       value={value}
-      onChange={(e) => setValue(e.target.value)}
-      onBlur={handleBlur}
+      onChange={(e) => { setValue(e.target.value) }}
+      onBlur={handleSave}
       onKeyDown={handleKeyDown}
       disabled={isPending}
-      className="
-        w-full p-1
-        
-         outline-none
-        bg-transparent
-
-        disabled:opacity-50 disabled:cursor-wait
-      "
+      className="w-full p-1 outline-none bg-transparent disabled:opacity-50 disabled:cursor-wait"
     />
   )
 }
