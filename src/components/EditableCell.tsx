@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useUpdateApplication } from "../hooks/useUpdateApplication"
 import type { Application } from "../types"
 
@@ -11,7 +11,19 @@ interface EditableCellProps {
 export function EditableCell({ initialValue, applicationId, field }: EditableCellProps) {
   const [value, setValue] = useState(initialValue)
   const skipSaveRef = useRef(false)
+  const inputRef = useRef<HTMLInputElement>(null)
   const { mutate, isPending } = useUpdateApplication()
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && inputRef.current === document.activeElement) {
+        inputRef.current?.blur()
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [])
 
   const handleSave = () => {
     if (skipSaveRef.current) {
@@ -38,6 +50,7 @@ export function EditableCell({ initialValue, applicationId, field }: EditableCel
 
   return (
     <input
+      ref={inputRef}
       value={value}
       onChange={(e) => { setValue(e.target.value) }}
       onBlur={handleSave}
