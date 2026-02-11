@@ -1,10 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+import { createRouter, RouterProvider } from "@tanstack/react-router"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
-import { BrowserRouter } from "react-router"
 import "./index.css"
-import App from "./App.tsx"
+import { rootRoute } from "./routes/root"
+
+const router = createRouter({
+  routeTree: rootRoute,
+})
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,9 +25,7 @@ if (!rootElement) throw new Error("Root element not found")
 createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <RouterProvider router={router} />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </StrictMode>

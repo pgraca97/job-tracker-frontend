@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
 import { createColumnHelper } from "@tanstack/react-table"
-import { Link } from "react-router"
 import { apiClient } from "../api/client"
 import { EditableCell } from "../components/EditableCell"
 import Table from "../components/Table"
@@ -21,13 +21,17 @@ const columns = [
   }),
   columnHelper.accessor("company", {
     header: "Company",
-    cell: (info) => (
-      <EditableCell
-        initialValue={info.getValue()}
-        applicationId={info.row.original.id}
-        field="company"
-      />
-    ),
+    cell: (info) => {
+      console.log(info.cell)
+      return (
+        <EditableCell
+          initialValue={info.getValue().name}
+          applicationId={info.row.original.id}
+          companyId={info.getValue().id}
+          field="company"
+        />
+      )
+    },
     meta: {
       className: "relative",
       isEditable: true,
@@ -65,6 +69,7 @@ const columns = [
 export function MyApplicationsPage() {
   const getApplications = async (): Promise<Application[]> => {
     const res = await apiClient.get("/applications")
+    console.log("Fetched applications:", res.data)
     return await res.data
   }
 

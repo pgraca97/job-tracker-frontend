@@ -6,7 +6,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { useState } from "react"
-import { useNavigate } from "react-router"
 import { useDeleteApplication } from "../hooks/useDelApplication"
 import type { Application } from "../types"
 
@@ -20,15 +19,13 @@ interface TableProps<TData> {
 declare module "@tanstack/react-table" {
   // Aqui defino o que eu quero que exista dentro de 'meta'
   interface ColumnMeta<TData extends RowData, TValue> {
-    className?: string;
-    isEditable?: boolean;
-    
+    className?: string
+    isEditable?: boolean
   }
 }
 
 export default function Table({ data, columns }: TableProps<Application>) {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null)
-  const navigate = useNavigate()
   const { deleteWithConfirmation } = useDeleteApplication()
 
   const table = useReactTable({
@@ -45,19 +42,6 @@ export default function Table({ data, columns }: TableProps<Application>) {
     const paddingClasses = columnDef.meta?.isEditable ? "" : "p-1"
 
     return `${baseClasses} ${paddingClasses} ${metaClasses}`.trim()
-  }
-
-  // const _handleMouseEnter = (row: any) => {
-  //   console.log("Hovered cell:", row.index)
-  //   console.log(`Mouse entered cell with id: ${row.id}`)
-  //   if (row.id.includes("company")) {
-  //     console.log("You hovered over a Company cell!")
-  //   }
-  // }
-
-  const handleCompanyClick = (application: Application) => {
-    console.log("Company cell clicked:", application.id)
-    navigate(`/application/${application.id}`)
   }
 
   return (
@@ -81,69 +65,67 @@ export default function Table({ data, columns }: TableProps<Application>) {
                 <td
                   key={cell.id}
                   className={getCellClasses(cell.column.columnDef)}
-                  onMouseEnter={() => setHoveredCell(cell.id)}
-                  onMouseLeave={() => setHoveredCell(null)}
                   onClick={(e) => {
-                    setHoveredCell(null);
                     if (cell.column.columnDef.meta?.isEditable) {
-                      const target = e.currentTarget;
-                      target.classList.add('border-b-red-500');
+                      const target = e.currentTarget
+                      target.classList.add("border-b-red-500")
 
                       // Adicionar borda ao td acima (mesma coluna, linha anterior)
-                      const currentRow = target.parentElement as HTMLTableRowElement;
-                      const previousRow = currentRow.previousElementSibling as HTMLTableRowElement;
+                      const currentRow = target.parentElement as HTMLTableRowElement
+                      const previousRow = currentRow.previousElementSibling as HTMLTableRowElement
 
                       if (previousRow) {
-                        const cellIndex = Array.from(currentRow.children).indexOf(target);
-                        const cellAbove = previousRow.children[cellIndex] as HTMLTableCellElement;
+                        const cellIndex = Array.from(currentRow.children).indexOf(target)
+                        // console.log("Cell index through tanstack method:", cell.column.getIndex()); conseguir o index da célula de outra forma
+                        const cellAbove = previousRow.children[cellIndex] as HTMLTableCellElement
 
                         if (cellAbove) {
-                          cellAbove.classList.add('border-b-red-500');
+                          cellAbove.classList.add("border-b-red-500")
                         }
                       } else {
                         // É a primeira linha, adiciona borda ao th correspondente
-                        const table = currentRow.closest('table');
-                        const thead = table?.querySelector('thead');
-                        const headerRow = thead?.querySelector('tr');
+                        const table = currentRow.closest("table")
+                        const thead = table?.querySelector("thead")
+                        const headerRow = thead?.querySelector("tr")
 
                         if (headerRow) {
-                          const cellIndex = Array.from(currentRow.children).indexOf(target);
-                          const th = headerRow.children[cellIndex] as HTMLTableCellElement;
+                          const cellIndex = Array.from(currentRow.children).indexOf(target)
+                          const th = headerRow.children[cellIndex] as HTMLTableCellElement
 
                           if (th) {
-                            th.classList.add('border-b-red-500');
+                            th.classList.add("border-b-red-500")
                           }
                         }
                       }
-                    };
+                    }
                   }}
                   onBlur={(e) => {
-                    const target = e.currentTarget;
-                    target.classList.remove('border-b-red-500');
+                    const target = e.currentTarget
+                    target.classList.remove("border-b-red-500")
 
                     // Remover borda do elemento acima também
-                    const currentRow = target.parentElement as HTMLTableRowElement;
-                    const previousRow = currentRow.previousElementSibling as HTMLTableRowElement;
+                    const currentRow = target.parentElement as HTMLTableRowElement
+                    const previousRow = currentRow.previousElementSibling as HTMLTableRowElement
 
                     if (previousRow) {
-                      const cellIndex = Array.from(currentRow.children).indexOf(target);
-                      const cellAbove = previousRow.children[cellIndex] as HTMLTableCellElement;
+                      const cellIndex = Array.from(currentRow.children).indexOf(target)
+                      const cellAbove = previousRow.children[cellIndex] as HTMLTableCellElement
 
                       if (cellAbove) {
-                        cellAbove.classList.remove('border-b-red-500');
+                        cellAbove.classList.remove("border-b-red-500")
                       }
                     } else {
                       // É a primeira linha, remove borda do th correspondente
-                      const table = currentRow.closest('table');
-                      const thead = table?.querySelector('thead');
-                      const headerRow = thead?.querySelector('tr');
+                      const table = currentRow.closest("table")
+                      const thead = table?.querySelector("thead")
+                      const headerRow = thead?.querySelector("tr")
 
                       if (headerRow) {
-                        const cellIndex = Array.from(currentRow.children).indexOf(target);
-                        const th = headerRow.children[cellIndex] as HTMLTableCellElement;
+                        const cellIndex = Array.from(currentRow.children).indexOf(target)
+                        const th = headerRow.children[cellIndex] as HTMLTableCellElement
 
                         if (th) {
-                          th.classList.remove('border-b-red-500');
+                          th.classList.remove("border-b-red-500")
                         }
                       }
                     }
@@ -154,19 +136,6 @@ export default function Table({ data, columns }: TableProps<Application>) {
                     }
                   }}
                 >
-                  {cell.column.id === "company" && hoveredCell === cell.id && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleCompanyClick(row.original)
-                        setHoveredCell(null)
-                      }}
-                      type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white border px-2 py-1 rounded shadow-sm cursor-pointer select-none"
-                    >
-                      Open
-                    </button>
-                  )}
                   {cell.column.id === "index" && hoveredCell === cell.id && (
                     <button
                       onClick={(e) => {

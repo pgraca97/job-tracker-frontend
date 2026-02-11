@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
-import { useNavigate, useParams } from "react-router"
+import { useNavigate, useParams } from "@tanstack/react-router"
 import { apiClient } from "../api/client"
 import { useDeleteApplication } from "../hooks/useDelApplication"
 import type { Application } from "../types"
 
 export default function ApplicationPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams({ from: "/application/$id" })
   const { deleteWithConfirmation, isPending } = useDeleteApplication()
   const navigate = useNavigate()
 
@@ -25,7 +25,9 @@ export default function ApplicationPage() {
       <pre>{JSON.stringify(data, null, 2)}</pre>
       <button
         type="button"
-        onClick={() => data && deleteWithConfirmation(data.id, () => navigate("/my-applications"))}
+        onClick={() =>
+          data && deleteWithConfirmation(data.id, () => navigate({ to: "/my-applications" }))
+        }
         disabled={isPending || !data}
       >
         {isPending ? "Deleting..." : "Delete"}
